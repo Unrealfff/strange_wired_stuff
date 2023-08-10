@@ -1,3 +1,6 @@
 # strange_wired_stuff
 # DO PROGRAMMING IN OOP (Special for Maxim)
-Материалы сайта распространяются некоммерческой организацией, выполняющей функции иностранного агента
+log (v0.0.2)
+-Improved performance
+-Working Minimap
+-Improved input
