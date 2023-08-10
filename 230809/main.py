@@ -25,6 +25,10 @@ class Game:
         self.collision_mas = list()
         self.draw = Draw()
 
+        self.left_pressed = False
+        self.right_pressed = False
+        self.up_pressed = False
+
     def _gen_lab(self) -> list:
         lab = Labirinth(self.settings.lab[0], self.settings.lab[1], self.settings.lab[2])
         lab.initialization()
@@ -38,35 +42,65 @@ class Game:
         clock = pygame.time.Clock()
         self._random_stuff_init(dis)
         while True:
+
+            clock.tick(self.settings.fps)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
                
-                if pygame.key.get_pressed()[K_LEFT]:
-                    self.player.rotate_left()
-                elif pygame.key.get_pressed()[K_RIGHT]:
-                    self.player.rotate_right()
-                elif pygame.key.get_pressed()[K_UP]:
-                    self.player.move_forward(self.collision_mas)
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.left_pressed = True
+                    elif event.key == pygame.K_RIGHT:
+                        self.right_pressed = True
+                    elif event.key == pygame.K_UP:
+                        self.up_pressed = True
+
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_LEFT:
+                        self.left_pressed = False
+                    elif event.key == pygame.K_RIGHT:
+                        self.right_pressed = False
+                    elif event.key == pygame.K_UP:
+                        self.up_pressed = False
+
+            if self.left_pressed:
+                self.player.rotate_left()
+            elif self.right_pressed:
+                self.player.rotate_right()
+            elif self.up_pressed:
+                self.player.move_forward(self.collision_mas)
+
+            
+                    
+            pygame.event.pump()
 
             self.draw.walls(self.player, dis, self.collision_mas)
+            self.draw.minimap_path(dis, self.player.pos)
             pygame.display.update()
-            clock.tick(self.settings.fps)
+            
 
     def _random_stuff_init(self, dis):
         for map_collision_x in range(60):
-          for map_collision_y in range(40):
-               if self.lab[map_collision_y][map_collision_x] == 0:
+            for map_collision_y in range(40):
+                if self.lab[map_collision_y][map_collision_x] == 0:
                     for collision_x in range(1320+map_collision_x*10, 1320+map_collision_x*10+10):
-                         for collision_y in range(680+map_collision_y*10, 680+map_collision_y*10+10):
-                              self.collision_mas.append((collision_x,collision_y))
-               elif self.lab[map_collision_y][map_collision_x] == 2:
-                    print('found start pos')
+                            self.collision_mas.append((collision_x,680+map_collision_y*10))
+                            self.collision_mas.append((collision_x,680+map_collision_y*10+10))
+                    for collision_y in range(680+map_collision_y*10, 680+map_collision_y*10+10):
+                            self.collision_mas.append((1320+map_collision_x*10,collision_y))
+                            self.collision_mas.append((1320+map_collision_x*10+10,collision_y))
+                elif self.lab[map_collision_y][map_collision_x] == 2:
                     self.player.pos = (1320+map_collision_x*10+5, 680+map_collision_y*10+5)
-               elif self.lab[map_collision_y][map_collision_x] == 3:
+                elif self.lab[map_collision_y][map_collision_x] == 3:
                     for collision_x in range(1320+map_collision_x*10, 1320+map_collision_x*10+10):
-                         for collision_y in range(680+map_collision_y*10, 680+map_collision_y*10+10):
-                              gfxdraw.pixel(dis, collision_x, collision_y, (0,100,0))
+                            for collision_y in range(680+map_collision_y*10, 680+map_collision_y*10+10):
+                                gfxdraw.pixel(dis, collision_x, collision_y, (0,100,0))
+
+        for draw_collision in self.collision_mas:
+            gfxdraw.pixel(dis, draw_collision[0], draw_collision[1], (0,0,100))
+
 
     
 
@@ -164,8 +198,14 @@ class Draw:
         wall_points, wall_visible_points = self._calculate_collision(player)
         wall_number = 0
         for drawer in range(0,1920,160):
-            pygame.draw.rect(dis, (255-round(255 * ((wall_visible_points[wall_number][0]+wall_visible_points[wall_number][1])/2)/self.range), 0,0), (drawer,0, drawer+160, 1080))
+            if wall_number < 8:
+                pygame.draw.rect(dis, (255-round(255 * ((wall_visible_points[wall_number][0]+wall_visible_points[wall_number][1])/2)/self.range), 0,0), (drawer,0, 160, 1080))
+            else:
+                pygame.draw.rect(dis, (255-round(255 * ((wall_visible_points[wall_number][0]+wall_visible_points[wall_number][1])/2)/self.range), 0,0), (drawer,0, 160, 680))
             wall_number += 1
+
+    def minimap_path(self, dis, player_pos):
+        gfxdraw.pixel(dis, round(player_pos[0]), round(player_pos[1]), (255,0,0))
 
     def get_col_mas(self):
         return self.collision_mas
